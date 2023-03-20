@@ -1,0 +1,34 @@
+shelly.kagan, talgordon
+Shelly Kagan (325264414), Tal Gordon (325312684)
+EX: 1
+
+FILES:
+myfile.c -- a file with some code
+myfile.h -- a file with some headers
+
+REMARKS:
+These are some remarks that
+I want the graders to know
+about this submission.
+
+ANSWERS:
+
+Assignment 1:
+1. the program creates a dir named "welcome_dir_1", and then creates another dir named "welcome_dir_2" inside it.
+2. it allocates 21000 bytes in the memory - it gets the inital address of the heap, and changes it current end-possition to be in a new address.
+3. it creates an empty file named "welcome_file.txt" in the directory which was created ("welcoome_dir_2")
+4. after that, it open the file "localtime" in the dir "etc" as a real only file. The file will be closed when another process will be activated.
+5. it checks the status of the file (localtime).
+6. it reads 4096 bytes from the "localtime" file and saves it in a buffer, and jumps 1506 bytes backwards, then it reads the
+rest of the file, in total those commands reads the last 1506 bytes in the file, and closes the file.
+7. the program reads the status of the "welcome_file", writes "welcome to OS-2023" in it and closes the file.\
+8. the program deletes the file "welcome_file"
+9. it tries to delete the dir "welcome_dir_2" but fails since this command only deletes files and not dirs
+10. it deletes the dirs "welcome_dir_2" and then "welcome_dir_1"
+11. exits all threads in the process (terminate everything).
+SUM: the program opens 2 dirs with a text file inside, writes "welcome to OS-2023", and deletes what it created.
+
+
+Q2:
+Here are answers to theoreical questions
+if there were such questions in the exercise.
