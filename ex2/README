@@ -1,0 +1,46 @@
+shelly.kagan, talgordon
+Shelly Kagan (325264414), Tal Gordon (325312684)
+EX: 2
+
+FILES:
+myfile.c -- a file with some code
+myfile.h -- a file with some headers
+
+REMARKS:
+These are some remarks that
+I want the graders to know
+about this submission.
+
+ANSWERS:
+
+Q1:
+a. sigsetjmp saves the current location,  CPU state and signal mask
+siglongjmp goes to the saved location, restoring the state and the signal mask
+
+b. sigsetjmp - if the flag "savemask" is not 0, sigsetjmp will also save
+the current signal mask of the calling thread as part of the calling environment.
+siglongjmp - if the env was initialized by a sigsetjmp with a non-zero savemask 
+argument, it will restore the saved signal mask.
+
+Q2:
+an example can be a website which shows multiple video while allowing the user to interact with the site.
+its a proccess with a lot of threads which runs simultaneously, and we want it to run fast.
+making it via user-level threads will be better, because it will be much faster (remvoes the
+overhead of switching to kernel mode).
+
+Q3:
+disadvantage - it will be slower, since the overhead is higher. it takes more time to terminate and to be created.
+advantage - since all the threads shares the same address space, there isnt a seperation between them, and an illegal
+operation of one thread (tab) can effect all the other tabs. if one crashs, we wont lose the others.
+
+Q4:
+c. every click on the keyboard (of typing the command) triggers an HARDWARE interrupt which is handled by the OS.
+the Shell sends a trap to the OS
+the OS sends a TERM signal to the application process
+
+Q5:
+real time is the time that is measured by an interal clock of the computer, and used for mostly synchronize and 
+timestamping external activities, such as save a file's creation time, or financial trading.
+virtual time is  a logical time that is used to order events in a system. It is often used in situations where 
+multiple  processors working on a task simultaneously and need to coordinate their activities, to ensure that 
+events are processed in the correct order. it is the running time of the process.
