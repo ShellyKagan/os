@@ -3,13 +3,12 @@ Shelly Kagan (325264414), Tal Gordon (325312684)
 EX: 1
 
 FILES:
-myfile.c -- a file with some code
-myfile.h -- a file with some headers
+osm.c -- a file which measures the time of simple operations
+Makefile -- the make file
+results.png -- a graph which describes the measurements results
 
 REMARKS:
-These are some remarks that
-I want the graders to know
-about this submission.
+None
 
 ANSWERS:
 
@@ -27,8 +26,3 @@ rest of the file, in total those commands reads the last 1506 bytes in the file,
 10. it deletes the dirs "welcome_dir_2" and then "welcome_dir_1"
 11. exits all threads in the process (terminate everything).
 SUM: the program opens 2 dirs with a text file inside, writes "welcome to OS-2023", and deletes what it created.
-
-
-Q2:
-Here are answers to theoreical questions
-if there were such questions in the exercise.
