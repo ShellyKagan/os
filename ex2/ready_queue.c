@@ -1,15 +1,7 @@
 // Queue implementation in C
-
-#include <stdio.h>
-#include "uthreads.h"
-#define max(X, Y) (((X) > (Y)) ? (X) : (Y))
-
-int push_to_ready(int);
-int pop_from_ready();
-void ready_queue_display();
-
-int ready_queue[MAX_THREAD_NUM + 1], front = -1, rear = -1;
-
+#include "ready_queue.h"
+int front = -1;
+int rear = -1;
 /**
  * inserts an item to the queue
  * @param value an int which will be pushed to the queue
@@ -45,7 +37,7 @@ int pop_from_ready() {
 }
 
 void move_objects_backward(int start_index){
-  for (int i = max(start_index, 1); i <= rear & i < MAX_THREAD_NUM; i++){
+  for (int i = max(start_index, 1); (i <= rear) & (i < MAX_THREAD_NUM); i++){
     ready_queue[i-1] = ready_queue[i];
   }
   rear--;
@@ -87,3 +79,4 @@ void ready_queue_display()
   printf("\n");
   fflush(stdout);
 }
+

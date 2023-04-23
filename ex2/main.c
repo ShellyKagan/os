@@ -2,12 +2,14 @@
 #include "uthreads.h"
 #include <stdio.h>
 #include <unistd.h>
+
 #define QUANTUM_USECS 1
 
 void first_thread(){
   while(1){
     for(int i=0;i<10;i++){
       printf("first %d",i);
+      fflush(stdout);
     }
   }
 }
@@ -29,7 +31,9 @@ void third_thread(){
 }
 
 
-int main(int argc, char *argv[]){
+int main(){
+
+  display_status();
 
   uthread_init(QUANTUM_USECS);
   // test adding & delete threads
@@ -43,28 +47,44 @@ int main(int argc, char *argv[]){
   uthread_spawn(third_entry_point);
   sleep(1);
 
+  display_status();
+
   int tid = uthread_get_tid();
-  printf("%d",tid);
-  uthread_block(tid);
+  printf("blocking thread with id: %d", tid);
+  fflush(stdout);
+  uthread_block(1);
   sleep(2);
-  uthread_resume (tid);
+  uthread_resume(tid);
   sleep(2);
+
+  display_status();
 
   tid = uthread_get_tid();
   printf("%d",tid);
+  fflush(stdout);
+
   uthread_sleep(10);
+  tid = uthread_get_tid();
+  printf("blocking thread with id: %d", tid);
+  fflush(stdout);
   uthread_block(tid);
   sleep(2);
   uthread_resume (tid);
   sleep(2);
 
+  display_status();
+  sleep(8);
+  display_status();
+
   tid = uthread_get_tid();
   printf("%d",tid);
+  fflush(stdout);
 
-  uthread_terminate (tid);
-  sleep(2);
   //terminates the main thread
   uthread_terminate(0);
+
+  display_status();
+
 
 
 

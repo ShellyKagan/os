@@ -1,16 +1,19 @@
+#ifndef UTHREADS_C
+#define UTHREADS_C
+
 #include <stdlib.h>
 #include <signal.h>
 #include <sys/time.h>
 #include "uthreads.h"
-#include "ready_queue.c"
-#include "sleeping_list.c"
+#include "ready_queue.h"
+#include "sleeping_list.h"
 #include <signal.h>
 #define FAIL -1
 #define SUCCESS 0
 
 typedef enum STATE
 {
-    RUN, READY, BLOCKED, NOTEXISTS
+    RUN, READY, BLOCKED, NOTEXISTS, SLEEPING
 } STATE;
 typedef void (*sig_handler) (int);
 
@@ -32,6 +35,25 @@ int quantum_len = 0;
 
 
 // ----------------------- LOCAL FUNCTIONS -----------------------------
+
+/**
+ * Display all relevant data structures status for debugging
+ */
+void display_status(){
+  printf ("---------------THREADS ARRAY------------------\n");
+  fflush(stdout);
+  for(int i = 0; i<MAX_THREAD_NUM; i++){
+    printf ("thread id: %d, state: %u, \n", i, threads[i].state);
+    fflush(stdout);
+  }
+  printf ("-----------------READY QUEUE----------------\n");
+  fflush(stdout);
+  ready_queue_display();
+  printf ("---------------SLEEPING LIST------------------\n");
+  fflush(stdout);
+  sleeping_list_display();
+}
+
 // todo: I have written it late in night, we should check it carefully!
 // todo: add increasment of total_tick when we start a new thread as a
 //  result of blocking
@@ -44,16 +66,18 @@ int quantum_len = 0;
  */
 int schedule (STATE current_new_state)
 {
-  threads[running_process_id].state = current_new_state; // is't it an array
-  // of Threads? It should be "threads[running_process_id].state=..."
-  if (current_new_state == READY &
-      threads[running_process_id].remain_sleep_time <= 0)
+  printf("\n\nASASAS entered function schedule. running is %d\n",
+         running_process_id);
+  fflush (stdout);
+
+  threads[running_process_id].state = current_new_state;
+  if (current_new_state == READY)
   {
     push_to_ready (running_process_id);
   }
-  if (current_new_state != RUN) // isn't it supposed to be ==?
+  if (current_new_state != RUN)
   {
-    running_process_id = pop_from_ready();
+    running_process_id = pop_from_ready ();
     if (running_process_id == FAIL)
     {
       printf ("thread library error: there are no threads to run\n");
@@ -62,9 +86,11 @@ int schedule (STATE current_new_state)
     }
     threads[running_process_id].state = RUN;
   }
+  printf("\n\nASASAS quit function schedule. running is %d\n",
+         running_process_id);
+  fflush (stdout);
   return SUCCESS;
-  // what happend if the proccess is sleeping? shouldn't we do something
-  // eiterway?
+
 }
 
 /**
@@ -79,6 +105,9 @@ int set_clock (sig_handler timer_handler, int value, int interval)
   struct sigaction sa = {0};
   struct itimerval timer;
 
+  printf("\n\nASASAS enter function set_clock. running is %d\n",
+         running_process_id);
+  fflush (stdout);
   sa.sa_handler = timer_handler;
   if (sigaction (SIGVTALRM, &sa, NULL) < 0)
   {
@@ -100,6 +129,9 @@ int set_clock (sig_handler timer_handler, int value, int interval)
     exit (1);
     return -1;
   }
+  printf("\n\nASASAS quit function set_clock. running is %d\n",
+         running_process_id);
+  fflush (stdout);
   return SUCCESS;
 }
 
@@ -109,6 +141,10 @@ int set_clock (sig_handler timer_handler, int value, int interval)
  */
 int look_for_id ()
 {
+  printf("\n\nASASAS enter function look_for_id. running is %d\n",
+         running_process_id);
+  fflush (stdout);
+
   for (int i = 1; i < MAX_THREAD_NUM; i++)
   {
     if (threads[i].state == NOTEXISTS)
@@ -116,6 +152,9 @@ int look_for_id ()
       return i;
     }
   }
+  printf("\n\nASASAS quit function look_for_id. running is %d\n",
+         running_process_id);
+  fflush (stdout);
   return -1;
 }
 
@@ -126,8 +165,11 @@ int look_for_id ()
  */
 int is_exists (int tid)
 {
+  printf("\n\nASASAS enter function is_exists. running is %d\n",
+         running_process_id);
   if (threads[tid].state == NOTEXISTS)
   {
+    printf ("thread library error: thread does`nt exists\n");
     printf ("thread library error: thread does`nt exists\n");
     fflush (stderr);
     return FAIL;
@@ -138,16 +180,19 @@ int is_exists (int tid)
 // todo: I have written it late in night, we should check it carefully!
 void manage_sleepers ()
 {
+  printf("\n\nASASAS enter function manage_sleepers. running is %d\n",
+         running_process_id);
   struct node *ptr;
   ptr = head;
-  int sleepers_to_delete[get_sleepers_amount()];
+  int sleepers_to_delete[MAX_THREAD_NUM];
   int last_delete_index = -1;
   while (ptr != NULL)
   {
     int sleeper_id = ptr->data;
     if (--threads[sleeper_id].remain_sleep_time <= 0)
     {
-      if (threads[sleeper_id].state != BLOCKED){
+      if (threads[sleeper_id].state != BLOCKED)
+      {
         threads[sleeper_id].state = READY;
         push_to_ready (sleeper_id);
       }
@@ -155,17 +200,22 @@ void manage_sleepers ()
     }
     ptr = ptr->next;
   }
-  while (last_delete_index > 0){  // delete the awake threads from the list
+  while (last_delete_index > 0)
+  {  // delete the awake threads from the list
     delete_fron_sleeping (sleepers_to_delete[last_delete_index--]);
   }
 }
 
 void on_tick (int sig)
 {
-  threads[running_process_id].quantums++;
-  manage_sleepers ();
-  schedule (READY);
-  total_tick++;
+  printf("\n\nASASAS enter function on_tick. running is %d\n",
+         running_process_id);
+  if (sig == SIGVTALRM){
+    threads[running_process_id].quantums++;
+    manage_sleepers ();
+    schedule (READY);
+    total_tick++;
+  }
 }
 
 // ----------------------- API FUNCTIONS -----------------------------
@@ -185,14 +235,19 @@ void on_tick (int sig)
 // todo: understand what to do with the first one
 // todo: figure out what are the initialization values
 // todo: finish writing
+// todo: starting the main thread
 int uthread_init (int quantum_usecs)
 {
-  set_clock(on_tick, quantum_usecs, quantum_usecs);
+  printf("\n\nASASAS enter function uthread_init. running is %d\n",
+         running_process_id);
+  set_clock (on_tick, quantum_usecs, quantum_usecs);
   // init threads array
-  Thread default_thread = {0, NOTEXISTS, NULL, NULL, 1};
-  for(int id = 0; id < MAX_THREAD_NUM; id++){
+  Thread default_thread = {0, NOTEXISTS, NULL, NULL, 1, 0};
+  for (int id = 0; id < MAX_THREAD_NUM; id++)
+  {
     threads[id] = default_thread;
   }
+  threads[0].state = RUN;
   return SUCCESS;
 }
 
@@ -210,6 +265,8 @@ int uthread_init (int quantum_usecs)
 */
 int uthread_spawn (thread_entry_point entry_point)
 {
+  printf("\n\nASASAS enter function uthread_spawn. running is %d\n",
+         running_process_id);
   // initialization & error checking
   if (current_threads_amount > MAX_THREAD_NUM || entry_point == NULL)
   {
@@ -227,7 +284,7 @@ int uthread_spawn (thread_entry_point entry_point)
   }
 
   // create the new thread and pushes it to the ready queue
-  Thread new_thread = {id, READY, stack, entry_point, 1};
+  Thread new_thread = {id, READY, stack, entry_point, 1, 0};
   threads[id] = new_thread;
   current_threads_amount++;
   return push_to_ready (id);
@@ -246,28 +303,35 @@ int uthread_spawn (thread_entry_point entry_point)
 */
 int uthread_terminate (int tid)
 {
-  if (is_exists (tid) == FAIL){
+  printf("\n\nASASAS enter function uthread_terminate. running is %d\n",
+         running_process_id);
+  if (is_exists (tid) == FAIL)
+  {
     return FAIL;
   }
 
   // delete from ready queue
-  if (threads[tid].state == READY){
-    remove_from_ready(tid);
+  if (threads[tid].state == READY)
+  {
+    remove_from_ready (tid);
   }
 
   // delete from sleeping list
-  if (threads[tid].remain_sleep_time > 0){
-    delete_fron_sleeping(tid);
+  if (threads[tid].remain_sleep_time > 0)
+  {
+    delete_fron_sleeping (tid);
   }
 
   //delete from threads array
-  free(threads[tid].stack);
+  free (threads[tid].stack);
   threads[tid].state = NOTEXISTS;
   current_threads_amount--;
 
   if (tid == 0)
   {
-    exit(0);
+    printf("ASASASAS terminating the main thread\n");
+    fflush(stdout);
+    exit (0);
   }
   return SUCCESS;
 }
@@ -283,6 +347,8 @@ int uthread_terminate (int tid)
 */
 int uthread_block (int tid)
 {
+  printf("\n\nASASAS enter function uthread_block. running is %d\n",
+         running_process_id);
   if (tid == 0)
   {
     printf ("thread library error: cant block the main thread\n");
@@ -318,6 +384,8 @@ int uthread_block (int tid)
 */
 int uthread_resume (int tid)
 {
+  printf("\n\nASASAS enter function uthread_resume. running is %d\n",
+         running_process_id);
   if (is_exists (tid) == FAIL)
   {
     return FAIL;
@@ -352,6 +420,8 @@ int uthread_resume (int tid)
 */
 int uthread_sleep (int num_quantums)
 {
+  printf("\n\nASASAS enter function uthread_sleep. running is %d\n",
+         running_process_id);
   if (num_quantums <= 0)
   { // todo: needs to be positive or not-negative?
     printf ("thread library error: num_quantums should be positive\n");
@@ -366,7 +436,11 @@ int uthread_sleep (int num_quantums)
     fflush (stderr);
     exit (1);
   }
-  return schedule (RUN);
+  if (threads[running_process_id].state != BLOCKED)
+  {
+    return schedule (SLEEPING);
+  }
+  return schedule (BLOCKED);
 }
 
 /**
@@ -376,6 +450,8 @@ int uthread_sleep (int num_quantums)
 */
 int uthread_get_tid ()
 {
+  printf("\n\nASASAS enter function uthread_get_tid. running is %d\n",
+         running_process_id);
   return running_process_id;
 }
 
@@ -389,6 +465,8 @@ int uthread_get_tid ()
 */
 int uthread_get_total_quantums ()
 {
+  printf("\n\nASASAS enter function uthread_get_total_quantums. running is %d\n",
+         running_process_id);
   // todo: what does it means "including the current"?
   return total_tick;
 }
@@ -404,9 +482,13 @@ int uthread_get_total_quantums ()
 */
 int uthread_get_quantums (int tid)
 {
+  printf("\n\nASASAS enter function uthread_get_quantums. running is %d\n",
+         running_process_id);
   if (is_exists (tid) == FAIL)
   {
     return FAIL;
   }
   return threads[tid].quantums;
 }
+
+#endif
