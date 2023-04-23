@@ -59,7 +59,7 @@ int index_in_sleeping(int tid)
   }
 }
 
-void delete_fron_sleeping(int tid)
+int delete_fron_sleeping(int tid)
 {
   struct node *ptr,*ptr1;
   int loc,i;
@@ -80,23 +80,23 @@ void delete_fron_sleeping(int tid)
   return 0;
 }
 
-void display()
+void sleeping_list_display()
 {
   struct node *ptr;
   ptr = head;
   if(ptr == NULL)
   {
     printf("sleeping list doesnt exists");
-    fflush();
+    fflush(stderr);
   }
   else
   {
     printf("\nprinting sleeping threads . . . . .\n");
-    fflush();
+    fflush(stderr);
     while (ptr!=NULL)
     {
       printf("\n%d",ptr->data);
-      fflush();
+      fflush(stderr);
       ptr = ptr -> next;
     }
   }
@@ -104,6 +104,8 @@ void display()
 
 int get_sleepers_amount(){
   int len = 0;
+  struct node *ptr;
+  ptr = head;
   while (ptr!=NULL)
   {
     len++;

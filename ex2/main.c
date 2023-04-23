@@ -2,7 +2,7 @@
 #include "uthreads.h"
 #include <stdio.h>
 #include <unistd.h>
-int QUANTUM_USECS = 1;
+#define QUANTUM_USECS 1
 
 void first_thread(){
   while(1){

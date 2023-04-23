@@ -1,12 +1,12 @@
 // Queue implementation in C
 
 #include <stdio.h>
-#include <uthreads.h>
+#include "uthreads.h"
 #define max(X, Y) (((X) > (Y)) ? (X) : (Y))
 
 int push_to_ready(int);
 int pop_from_ready();
-void display();
+void ready_queue_display();
 
 int ready_queue[MAX_THREAD_NUM + 1], front = -1, rear = -1;
 
@@ -67,7 +67,7 @@ int remove_from_ready(int tid){
 }
 
 // Function to print the queue - for debugging purpose
-void display()
+void ready_queue_display()
 {
   if (rear == -1)
   {

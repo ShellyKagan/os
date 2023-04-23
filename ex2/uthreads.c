@@ -4,8 +4,9 @@
 #include "uthreads.h"
 #include "ready_queue.c"
 #include "sleeping_list.c"
-#define FAIL -1;
-#define SUCCESS 0;
+#include <signal.h>
+#define FAIL -1
+#define SUCCESS 0
 
 typedef enum STATE
 {
@@ -52,7 +53,7 @@ int schedule (STATE current_new_state)
   }
   if (current_new_state != RUN) // isn't it supposed to be ==?
   {
-    running_process_id = pop_from_ready ();
+    running_process_id = pop_from_ready();
     if (running_process_id == FAIL)
     {
       printf ("thread library error: there are no threads to run\n");
@@ -188,7 +189,7 @@ int uthread_init (int quantum_usecs)
 {
   set_clock(on_tick, quantum_usecs, quantum_usecs);
   // init threads array
-  Thread default_thread = {0, NOTEXISTS, null, null, 1};
+  Thread default_thread = {0, NOTEXISTS, NULL, NULL, 1};
   for(int id = 0; id < MAX_THREAD_NUM; id++){
     threads[id] = default_thread;
   }
@@ -260,7 +261,7 @@ int uthread_terminate (int tid)
   }
 
   //delete from threads array
-  free(threads[tid].stack)
+  free(threads[tid].stack);
   threads[tid].state = NOTEXISTS;
   current_threads_amount--;
 
@@ -302,7 +303,7 @@ int uthread_block (int tid)
     {
       return FAIL;
     }
-    threads[id].state = BLOCKED;
+    threads[tid].state = BLOCKED;
   }
   return SUCCESS;
 }
@@ -364,7 +365,6 @@ int uthread_sleep (int num_quantums)
     printf ("system error: memory error.\n");
     fflush (stderr);
     exit (1);
-    return -1;
   }
   return schedule (RUN);
 }
@@ -390,7 +390,7 @@ int uthread_get_tid ()
 int uthread_get_total_quantums ()
 {
   // todo: what does it means "including the current"?
-  return total_quantum;
+  return total_tick;
 }
 
 /**
@@ -408,5 +408,5 @@ int uthread_get_quantums (int tid)
   {
     return FAIL;
   }
-  return threads[tid].quantum;
+  return threads[tid].quantums;
 }
