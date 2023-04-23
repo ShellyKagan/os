@@ -187,6 +187,11 @@ void on_tick (int sig)
 int uthread_init (int quantum_usecs)
 {
   set_clock(on_tick, quantum_usecs, quantum_usecs);
+  // init threads array
+  Thread default_thread = {0, NOTEXISTS, null, null, 1};
+  for(int id = 0; id < MAX_THREAD_NUM; id++){
+    threads[id] = default_thread;
+  }
   return SUCCESS;
 }
 
