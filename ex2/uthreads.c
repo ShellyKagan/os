@@ -43,13 +43,14 @@ int quantum_len = 0;
  */
 int schedule (STATE current_new_state)
 {
-  threads[running_process_id] = current_new_state;
+  threads[running_process_id].state = current_new_state; // is't it an array
+  // of Threads? It should be "threads[running_process_id].state=..."
   if (current_new_state == READY &
       threads[running_process_id].remain_sleep_time <= 0)
   {
     push_to_ready (running_process_id);
   }
-  if (current_new_state != RUN)
+  if (current_new_state != RUN) // isn't it supposed to be ==?
   {
     running_process_id = pop_from_ready ();
     if (running_process_id == FAIL)
@@ -61,6 +62,8 @@ int schedule (STATE current_new_state)
     threads[running_process_id].state = RUN;
   }
   return SUCCESS;
+  // what happend if the proccess is sleeping? shouldn't we do something
+  // eiterway?
 }
 
 /**
@@ -237,6 +240,29 @@ int uthread_spawn (thread_entry_point entry_point)
 */
 int uthread_terminate (int tid)
 {
+  if (is_exists (tid) == FAIL){
+    return FAIL;
+  }
+
+  // delete from ready queue
+  if (threads[tid].state == READY){
+    remove_from_ready(tid);
+  }
+
+  // delete from sleeping list
+  if (threads[tid].remain_sleep_time > 0){
+    delete_fron_sleeping(tid);
+  }
+
+  //delete from threads array
+  free(threads[tid].stack)
+  threads[tid].state = NOTEXISTS;
+  current_threads_amount--;
+
+  if (tid == 0)
+  {
+    exit(0);
+  }
   return SUCCESS;
 }
 
