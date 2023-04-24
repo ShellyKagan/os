@@ -22,6 +22,8 @@ typedef unsigned long address_t;
 #define JB_SP 6
 #define JB_PC 7
 
+
+
 typedef enum STATE
 {
     RUN, READY, BLOCKED, NOTEXISTS, SLEEPING
@@ -91,6 +93,8 @@ void setup_thread(int tid, char *stack, thread_entry_point entry_point)
   sigemptyset(&env[tid]->__saved_mask);
 }
 
+void manage_sleepers ();
+
 /**
  * Display all relevant data structures status for debugging
  */
@@ -122,8 +126,8 @@ void display_status(){
  ///todo: if ready = -1, return error
 int schedule (STATE current_new_state)
 {
-  printf("\n\nASASAS entered function schedule. running is %d\n",
-         running_process_id);
+  printf("ASASAS entered function schedule. running is %d. parameter: %d\n",
+         running_process_id, current_new_state);
   fflush (stdout);
 
   threads[running_process_id].state = current_new_state;
@@ -143,11 +147,25 @@ int schedule (STATE current_new_state)
     threads[running_process_id].state = RUN;
     jump_to_thread (running_process_id);
   }
-  printf("\n\nASASAS quit function schedule. running is %d\n",
-         running_process_id);
   fflush (stdout);
   return SUCCESS;
 
+}
+
+// todo: figure out why the clock doesnt work
+void on_tick (int sig)
+{
+  printf("ASASAS enter function on_tick. running is %d\n",
+         running_process_id);
+  fflush(stdout);
+  if (sig == SIGVTALRM){
+    printf("ASASAS enter function on_tick. entered the if\n");
+    fflush(stdout);
+    threads[running_process_id].quantums++;
+    manage_sleepers ();
+    schedule (READY);
+    total_tick++;
+  }
 }
 
 /**
@@ -162,10 +180,12 @@ int set_clock (sig_handler timer_handler, int value, int interval)
   struct sigaction sa = {0};
   struct itimerval timer;
 
-  printf("\n\nASASAS enter function set_clock. running is %d\n",
+  printf("ASASAS enter function set_clock. running is %d.\n",
          running_process_id);
   fflush (stdout);
-  sa.sa_handler = timer_handler;
+
+//  sa.sa_handler = timer_handler;
+  sa.sa_handler = &on_tick;
   if (sigaction (SIGVTALRM, &sa, NULL) < 0)
   {
     printf ("system error: sigaction error.\n");
@@ -186,9 +206,7 @@ int set_clock (sig_handler timer_handler, int value, int interval)
     exit (1);
     return -1;
   }
-  printf("\n\nASASAS quit function set_clock. running is %d\n",
-         running_process_id);
-  fflush (stdout);
+  
   return SUCCESS;
 }
 
@@ -198,7 +216,7 @@ int set_clock (sig_handler timer_handler, int value, int interval)
  */
 int look_for_id ()
 {
-  printf("\n\nASASAS enter function look_for_id. running is %d\n",
+  printf("ASASAS enter function look_for_id. running is %d\n",
          running_process_id);
   fflush (stdout);
 
@@ -209,8 +227,6 @@ int look_for_id ()
       return i;
     }
   }
-  printf("\n\nASASAS quit function look_for_id. running is %d\n",
-         running_process_id);
   fflush (stdout);
   return -1;
 }
@@ -222,8 +238,8 @@ int look_for_id ()
  */
 int is_exists (int tid)
 {
-  printf("\n\nASASAS enter function is_exists. running is %d\n",
-         running_process_id);
+  printf("ASASAS enter function is_exists. running is %d. parameter: %d\n",
+         running_process_id, tid);
   if (threads[tid].state == NOTEXISTS)
   {
     printf ("thread library error: thread does`nt exists\n");
@@ -237,14 +253,18 @@ int is_exists (int tid)
 // todo: I have written it late in night, we should check it carefully!
 void manage_sleepers ()
 {
-  printf("\n\nASASAS enter function manage_sleepers. running is %d\n",
-         running_process_id);
+  printf("ASASAS enter function manage_sleepers. running is %d. sleepers "
+         "amount: %d\n",
+         running_process_id, get_sleepers_amount());
+  fflush(stdout);
+
   struct node *ptr;
   ptr = head;
   int sleepers_to_delete[MAX_THREAD_NUM];
   int last_delete_index = -1;
   while (ptr != NULL)
   {
+
     int sleeper_id = ptr->data;
     if (--threads[sleeper_id].remain_sleep_time <= 0)
     {
@@ -253,27 +273,16 @@ void manage_sleepers ()
         threads[sleeper_id].state = READY;
         push_to_ready (sleeper_id);
       }
-      sleepers_to_delete[last_delete_index++] = sleeper_id;
+      sleepers_to_delete[++last_delete_index] = sleeper_id;
     }
     ptr = ptr->next;
   }
-  while (last_delete_index > 0)
+  while (last_delete_index >= 0)
   {  // delete the awake threads from the list
     delete_fron_sleeping (sleepers_to_delete[last_delete_index--]);
   }
 }
 
-void on_tick (int sig)
-{
-  printf("\n\nASASAS enter function on_tick. running is %d\n",
-         running_process_id);
-  if (sig == SIGVTALRM){
-    threads[running_process_id].quantums++;
-    manage_sleepers ();
-    schedule (READY);
-    total_tick++;
-  }
-}
 
 
 
@@ -298,7 +307,7 @@ void on_tick (int sig)
 // todo: starting the main thread
 int uthread_init (int quantum_usecs)
 {
-  printf("\n\nASASAS enter function uthread_init. running is %d\n",
+  printf("ASASAS enter function uthread_init. running is %d\n",
          running_process_id);
   set_clock (on_tick, quantum_usecs, quantum_usecs);
   // init threads array
@@ -325,7 +334,7 @@ int uthread_init (int quantum_usecs)
 */
 int uthread_spawn (thread_entry_point entry_point)
 {
-  printf("\n\nASASAS enter function uthread_spawn. running is %d\n",
+  printf("ASASAS enter function uthread_spawn. running is %d\n",
          running_process_id);
   // initialization & error checking
   if (current_threads_amount > MAX_THREAD_NUM || entry_point == NULL)
@@ -363,8 +372,10 @@ int uthread_spawn (thread_entry_point entry_point)
 */
 int uthread_terminate (int tid)
 {
-  printf("\n\nASASAS enter function uthread_terminate. running is %d\n",
-         running_process_id);
+  printf("ASASAS enter function uthread_terminate. running is %d, parameter "
+         "is %d"
+         "\n",
+         running_process_id, tid);
   if (is_exists (tid) == FAIL)
   {
     return FAIL;
@@ -407,8 +418,9 @@ int uthread_terminate (int tid)
 */
 int uthread_block (int tid)
 {
-  printf("\n\nASASAS enter function uthread_block. running is %d\n",
-         running_process_id);
+  printf("ASASAS enter function uthread_block. running is %d. parameter is "
+         "%d\n",
+         running_process_id, tid);
   if (tid == 0)
   {
     printf ("thread library error: cant block the main thread\n");
@@ -444,8 +456,9 @@ int uthread_block (int tid)
 */
 int uthread_resume (int tid)
 {
-  printf("\n\nASASAS enter function uthread_resume. running is %d\n",
-         running_process_id);
+  printf("ASASAS enter function uthread_resume. running is %d, parameter is %d"
+         "\n",
+         running_process_id, tid);
   if (is_exists (tid) == FAIL)
   {
     return FAIL;
@@ -480,8 +493,16 @@ int uthread_resume (int tid)
 */
 int uthread_sleep (int num_quantums)
 {
-  printf("\n\nASASAS enter function uthread_sleep. running is %d\n",
-         running_process_id);
+  printf("ASASAS enter function uthread_sleep. running is %d, parameter is "
+         "%d\n",
+         running_process_id, num_quantums);
+
+  if (running_process_id == 0)
+  {
+    printf ("thread library error: cant put to sleep the main thread\n");
+    fflush (stderr);
+    return FAIL;
+  }
   if (num_quantums <= 0)
   { // todo: needs to be positive or not-negative?
     printf ("thread library error: num_quantums should be positive\n");
@@ -510,7 +531,8 @@ int uthread_sleep (int num_quantums)
 */
 int uthread_get_tid ()
 {
-  printf("\n\nASASAS enter function uthread_get_tid. running is %d\n",
+  printf("ASASAS enter function uthread_get_tid. running is %d"
+         "\n",
          running_process_id);
   return running_process_id;
 }
@@ -525,7 +547,7 @@ int uthread_get_tid ()
 */
 int uthread_get_total_quantums ()
 {
-  printf("\n\nASASAS enter function uthread_get_total_quantums. running is %d\n",
+  printf("ASASAS enter function uthread_get_total_quantums. running is %d\n",
          running_process_id);
   // todo: what does it means "including the current"?
   return total_tick;
@@ -542,7 +564,7 @@ int uthread_get_total_quantums ()
 */
 int uthread_get_quantums (int tid)
 {
-  printf("\n\nASASAS enter function uthread_get_quantums. running is %d\n",
+  printf("ASASAS enter function uthread_get_quantums. running is %d\n",
          running_process_id);
   if (is_exists (tid) == FAIL)
   {
