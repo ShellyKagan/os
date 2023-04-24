@@ -7,26 +7,51 @@
 
 void first_thread(){
   while(1){
+    uthread_resume (2);
+    uthread_resume (3);
+
     for(int i=0;i<10;i++){
-      printf("first %d",i);
+      printf("first %d\n",i);
       fflush(stdout);
+      sleep(1);
     }
+    uthread_block (1);
+    display_status();
+
   }
 }
 
 void second_thread(){
   while(1){
+    uthread_resume (1);
+    uthread_resume (3);
+
     for(int i=10;i<20;i++){
-      printf("second %d", i);
+      printf("second %d\n", i);
+      fflush(stdout);
+      sleep(1);
     }
+    uthread_block (2);
+    display_status();
+
+
   }
 }
 
 void third_thread(){
   while(1){
+    uthread_resume (1);
+    uthread_resume (2);
+
     for(int i=20;i<30;i++){
-      printf("third %d",i);
+      printf("third %d\n",i);
+      fflush(stdout);
+      sleep(1);
     }
+    uthread_block (3);
+    display_status();
+
+
   }
 }
 
@@ -50,7 +75,7 @@ int main(){
   display_status();
 
   int tid = uthread_get_tid();
-  printf("blocking thread with id: %d", tid);
+  printf("blocking thread with id: 1");
   fflush(stdout);
   uthread_block(1);
   sleep(2);
@@ -81,7 +106,17 @@ int main(){
   fflush(stdout);
 
   //terminates the main thread
+  uthread_terminate(1);
+  display_status();
+
+  uthread_terminate(2);
+  display_status();
+
+  uthread_terminate(3);
+  display_status();
+
   uthread_terminate(0);
+
 
   display_status();
 

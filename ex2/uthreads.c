@@ -4,12 +4,23 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <sys/time.h>
+#include <setjmp.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <stdbool.h>
+
 #include "uthreads.h"
 #include "ready_queue.h"
 #include "sleeping_list.h"
-#include <signal.h>
+
+
 #define FAIL -1
 #define SUCCESS 0
+
+
+typedef unsigned long address_t;
+#define JB_SP 6
+#define JB_PC 7
 
 typedef enum STATE
 {
@@ -28,6 +39,8 @@ typedef struct Thread
 } Thread;
 
 Thread threads[MAX_THREAD_NUM];
+sigjmp_buf env[MAX_THREAD_NUM];
+
 int running_process_id = 0;
 int current_threads_amount = 0;
 int total_tick = 0;
@@ -35,6 +48,48 @@ int quantum_len = 0;
 
 
 // ----------------------- LOCAL FUNCTIONS -----------------------------
+void jump_to_thread(int tid)
+{
+  running_process_id = tid;
+  siglongjmp(env[tid], 1);
+}
+
+/**
+ * @brief Saves the current thread state, and jumps to the other thread.
+ */
+void yield(int jump_tid)
+{
+  int ret_val = sigsetjmp(env[running_process_id], 1);
+  printf("yield: ret_val=%d\n", ret_val);
+  if (ret_val == 0)
+  {
+    jump_to_thread(jump_tid);
+  }
+}
+
+/* A translation is required when using an address of a variable.
+   Use this as a black box in your code. */
+address_t translate_address(address_t addr)
+{
+  address_t ret;
+  asm volatile("xor    %%fs:0x30,%0\n"
+               "rol    $0x11,%0\n"
+      : "=g" (ret)
+      : "0" (addr));
+  return ret;
+}
+
+void setup_thread(int tid, char *stack, thread_entry_point entry_point)
+{
+  // initializes env[tid] to use the right stack, and to run from the function 'entry_point', when we'll use
+  // siglongjmp to jump into the thread.
+  address_t sp = (address_t) stack + STACK_SIZE - sizeof(address_t);
+  address_t pc = (address_t) entry_point;
+  sigsetjmp(env[tid], 1);
+  (env[tid]->__jmpbuf)[JB_SP] = translate_address(sp);
+  (env[tid]->__jmpbuf)[JB_PC] = translate_address(pc);
+  sigemptyset(&env[tid]->__saved_mask);
+}
 
 /**
  * Display all relevant data structures status for debugging
@@ -64,6 +119,7 @@ void display_status(){
  * transfered
  * @return 0 on success, -1 on fail
  */
+ ///todo: if ready = -1, return error
 int schedule (STATE current_new_state)
 {
   printf("\n\nASASAS entered function schedule. running is %d\n",
@@ -85,6 +141,7 @@ int schedule (STATE current_new_state)
       return FAIL;
     }
     threads[running_process_id].state = RUN;
+    jump_to_thread (running_process_id);
   }
   printf("\n\nASASAS quit function schedule. running is %d\n",
          running_process_id);
@@ -218,6 +275,9 @@ void on_tick (int sig)
   }
 }
 
+
+
+
 // ----------------------- API FUNCTIONS -----------------------------
 
 /**
@@ -286,11 +346,11 @@ int uthread_spawn (thread_entry_point entry_point)
   // create the new thread and pushes it to the ready queue
   Thread new_thread = {id, READY, stack, entry_point, 1, 0};
   threads[id] = new_thread;
+  setup_thread(id, stack, entry_point);
   current_threads_amount++;
   return push_to_ready (id);
 }
 
-// todo: write
 /**
  * @brief Terminates the thread with ID tid and deletes it from all relevant control structures.
  *
