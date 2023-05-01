@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <setjmp.h>
 
 #include "uthreads.h"
 #include "ready_queue.h"
@@ -186,7 +187,7 @@ int set_clock (sig_handler timer_handler, int value, int interval)
 
 //  sa.sa_handler = timer_handler;
   sa.sa_handler = &on_tick;
-  if (sigaction (SIGVTALRM, &sa, NULL) < 0)
+  if (sigaction (SIGTALRM, &sa, NULL) < 0)
   {
     printf ("system error: sigaction error.\n");
     fflush (stderr);

@@ -1,5 +1,5 @@
 // main function for testing the uthreads library
-#include "uthreads.h"
+#include "../ex2/uthreads.h"
 #include <stdio.h>
 #include <unistd.h>
 

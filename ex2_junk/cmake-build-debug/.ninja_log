@@ -1,0 +1,7 @@
+# ninja log v5
+1	8746	7043251612799251	tests/googletest-build/googlemock/CMakeFiles/gmock.dir/src/gmock-all.cc.obj	d04a797114995186
+15	17979	7043251705007966	tests/googletest-build/googletest/CMakeFiles/gtest.dir/src/gtest-all.cc.obj	83b87008b778bd69
+17982	21683	7043251742262513	lib/libgtest.a	ee2974f7b0df5a00
+21683	22148	7043251746901395	lib/libgmock.a	473f145c07c2804e
+4	109	7046382118542239	CMakeFiles/uthreads.dir/ready_queue.cpp.obj	a5e7fc0f01bcae8c
+10	114	7046382118593893	CMakeFiles/uthreads.dir/sleeping_list.cpp.obj	b42edcb9d8dbf54d
